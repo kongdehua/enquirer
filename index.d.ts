@@ -728,7 +728,13 @@ declare namespace Enquirer {
   }
   export const autocomplete: AutoComplete
 
-  export class BasicAuth extends AuthPrompt { }
+  export class BasicAuth extends AuthPrompt {
+    constructor(auth :{
+        username: string,
+        password: string,
+      showPassword: boolean,
+    } & Prompt.Question.Base)
+  }
   export const basicauth: BasicAuth
 
   export class Confirm extends BooleanPrompt { }
