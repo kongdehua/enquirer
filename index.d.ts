@@ -26,10 +26,10 @@ declare class Enquirer extends EventEmitter {
    *
    * @param questions Options objects for one or more prompts to run.
    */
-  prompt(questions: Enquirer.prompt.Question
-    | ((this: Enquirer) => Enquirer.prompt.Question)
-    | (Enquirer.prompt.Question | ((this: Enquirer) => Enquirer.prompt.Question))[]
-  ): Promise<Enquirer.Answers>
+  prompt<T = Enquirer.prompt.Question, V extends Enquirer.Answer = Enquirer.Answer
+  //>(questions: T | ((this: Enquirer) => T) | (T | ((this: Enquirer) => T))[]
+    >(questions: T | T[]
+    ): Promise<Record<string, V>>
 
   /**
    * Use an enquirer plugin.
@@ -111,7 +111,7 @@ declare namespace Enquirer {
         value?: string,
         message?: string,
         hint?: string,
-        disabled?: boolean
+        disabled?: boolean,
       }
       export type Answer = { selectedAnswer: string, correctAnswer: string, correct: boolean }
     }
@@ -179,7 +179,9 @@ declare namespace Enquirer {
       type: 'snippet',
       required?: boolean,
       fields?: SnippetQuestion.Field[],
-    } & internalTypes.QuestionBase &
+      template: string
+    } &
+      internalTypes.QuestionBase &
       internalTypes.Formatter<SnippetQuestion.Answer | undefined, SnippetQuestion.Answer> &
       internalTypes.Validator<SnippetQuestion.Answer, SnippetQuestion.Answer>
 
@@ -188,7 +190,7 @@ declare namespace Enquirer {
         name: string,
         message?: string,
         initial?: string
-        validate?: (value: string) => boolean | Promise<boolean>
+        validate?: (value: string, state: State) => boolean | Promise<boolean>
       }
 
       export type Answer = {
@@ -327,6 +329,7 @@ declare namespace Enquirer {
     hint?: string;
     disabled?: boolean;
     value?: Answer;
+    initial?: string;
   }
 
   export type Choice = {
@@ -536,7 +539,7 @@ declare namespace Enquirer {
     }
   }
 
-  export class StringPrompt extends Prompt<string> {
+  export class StringPrompt<T extends Answer = string> extends Prompt<T> {
     constructor(question: StringPrompt.Question)
     append(ch: string): void;
     backward(): void;
@@ -709,7 +712,7 @@ declare namespace Enquirer {
   //#region Build-in prompts
 
   export class AutoComplete<T extends Answer = string> extends Select {
-    constructor(question: AutoComplete.Question<T>)
+    constructor(question: {limit?: number; multiple?: boolean} & AutoComplete.Question<T>)
     complete(): Promise<void>;
     delete(): Promise<void>;
     deleteForward(): Promise<void>;
@@ -746,7 +749,7 @@ declare namespace Enquirer {
   export class Form extends Select { }
   export const form: Form
 
-  export class Input extends StringPrompt {
+  export class Input<T extends Answer = string> extends StringPrompt<T> {
     altDown(): Promise<void>;
 
     altUp(): Promise<void>;
@@ -781,7 +784,7 @@ declare namespace Enquirer {
   export const list: List
 
   export class MultiSelect extends Select {
-    constructor(question: MultiSelect.Question)
+    constructor(question: {limit?:number} & MultiSelect.Question)
   }
   export namespace MultiSelect {
     export type Question = ArrayPrompt.Question<any, MultiSelect> & { maxSelected?: number };
@@ -795,7 +798,9 @@ declare namespace Enquirer {
   export class Password extends StringPrompt { }
   export const password: Password
 
-  export class Quiz extends Select { }
+  export class Quiz extends Select {
+    constructor(question: {correctChoice: number} & MultiSelect.Question )
+  }
   export const quiz: Quiz
 
   export class Scale extends ArrayPrompt { }
@@ -811,13 +816,23 @@ declare namespace Enquirer {
   }
   export const select: Select
 
-  export class Snippet extends Prompt { }
+  export class Snippet extends Prompt {
+    constructor(input: prompt.SnippetQuestion);
+  }
   export const snippet: Snippet
 
-  export class Sort extends Prompt { }
+  export class Sort extends Prompt {
+    constructor(question: {numbered?:boolean} & MultiSelect.Question)
+  }
   export const sort: Sort
 
-  export class Survey extends ArrayPrompt { }
+  export class Survey extends ArrayPrompt {
+    constructor(
+      input: {
+        scale: { name: string, message: string }[],
+        margin: [number, number, number, number],
+      } & MultiSelect.Question )
+  }
   export const survey: Survey
 
   export const Text: typeof Input

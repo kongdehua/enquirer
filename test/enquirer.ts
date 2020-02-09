@@ -1,4 +1,4 @@
-import colors from 'ansi-colors';
+import colors, {ColorStringCovert} from 'ansi-colors';
 import assert from 'assert';
 import 'mocha';
 import Enquirer from '..';
@@ -143,8 +143,8 @@ describe('Enquirer', function () {
           count++;
           prompt.state.input = 'orange';
           prompt.submit();
-          assert.equal(prompt.styles.primary('orange'), colors.blue('orange'));
-          assert.equal(await prompt.format(), colors.green('orange'));
+          assert.equal(prompt.styles.primary('orange'), (colors.blue as ColorStringCovert)('orange'));
+          assert.equal(await prompt.format(), (colors.green as ColorStringCovert)('orange'));
           await prompt.render();
         } catch (err) {
           error = err;
@@ -219,7 +219,7 @@ describe('Enquirer', function () {
         })
     });
 
-    it('should await onSubmit when a prompt submitted', () => {
+    it('should await onSubmit when a prompt submitted', async () => {
       let called = 0;
 
       enquirer = new Enquirer({
@@ -260,30 +260,59 @@ describe('Enquirer', function () {
 
   describe('.register', () => {
     beforeEach(() => {
-      enquirer = new Enquirer({ show: false });
+      enquirer = new Enquirer({ show: false, autofill: true });
     });
 
     it('should register a custom prompt type as a class', () => {
-      class Foo extends Input { }
+      type FooQuestion = { type: 'foo' }
+        & Enquirer.prompt.internalTypes.QuestionBase;
+
+      //class Foo extends Input<FooQuestion> { }
       enquirer.register('foo', Enquirer.StringPrompt);
+      /*
       enquirer = new Enquirer({
-        show: false,
+        show: true,
         autofill: true
       }, {
         color: 'orange'
       })
-
-      return enquirer.prompt({
+      */
+      /*
+      */
+      assert.equal('orange', 'orange');
+      enquirer.prompt<FooQuestion, {color: string}>({
         type: 'foo',
         name: 'color',
         message: 'Favorite color?'
+      }).then( (answer: Record<string, { color: string; }>) => {
+        assert.equal(answer.color, 'orange');
       })
-        .then(answers => {
-          assert.equal(answers.color, 'orange');
-        });
+      /*
+      */
+
+        /*
+      let foo = new Foo<{
+        color: 'orange'
+      }>({
+        type: 'foo',
+        name: 'color',
+        message: 'Favorite color?'
+      });
+      let result : {
+        color: 'orange'
+      } = await foo.run();
+         */
+      /*
+      foo.run().then( (answer: any) => {
+        assert.equal(answer.color, 'orange');
+      })
+      */
+      //.then( (answers:any) => {
+      //    assert.equal(answers.color, 'orange');
+      //  });
     });
 
-    it('should register a custom prompt type as a function', () => {
+    it('should register a custom prompt type as a function', async () => {
       class Foo extends Input { }
       enquirer.register('foo', () => Foo);
       enquirer = new Enquirer({
@@ -305,22 +334,22 @@ describe('Enquirer', function () {
   });
 
   describe('options.autofill', () => {
-    it('should autofill answers', () => {
+    it('should autofill answers', async () => {
       enquirer = new Enquirer({
-        show: false,
-        autofill: true
+        show: true,
+        autofill: "show"
       }, {
         color: 'orange'
       });
 
-      return enquirer.prompt({
+      let answers =await enquirer.prompt({
         type: 'input',
         name: 'color',
         message: 'Favorite color?'
       })
-        .then(answers => {
-          assert.equal(answers.color, 'orange');
-        });
+
+      console.log(answers);
+      assert.equal(answers.color, 'orange');
     });
   });
 });

@@ -1,4 +1,5 @@
 # always ignore files
+*.txt
 *.DS_Store
 .idea
 .vscode
